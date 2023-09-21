@@ -1,4 +1,4 @@
-# compass_poject
+# compass_project
 
 A new mobile cross-platform project
 
