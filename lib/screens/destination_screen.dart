@@ -1,35 +1,19 @@
-import 'dart:isolate';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
 
 class DestinationScreen extends StatefulWidget {
-  const DestinationScreen(this.backToCompass, {super.key});
+  const DestinationScreen(this.continuePlaylist, this.text, this.photoPath,
+      {super.key});
+  final String text;
+  final String photoPath;
 
-  final void Function() backToCompass;
+  final void Function() continuePlaylist;
 
   @override
   State<DestinationScreen> createState() => _DestinationScreenState();
 }
 
 class _DestinationScreenState extends State<DestinationScreen> {
-  double distance = 32;
-  ReceivePort _port = ReceivePort();
-  void _startBackgroundTask() async {
-    await Isolate.spawn(_backgroundTask, _port.sendPort);
-    _port.listen((message) {
-      // Handle background task completion
-      print('Background task completed: $message');
-    });
-  }
-
-  void _backgroundTask(SendPort sendPort) {
-    while (distance < 35 && distance > 0) {
-      Vibrate.vibrate;
-    }
-    sendPort.send('Task completed successfully!');
-  }
-
+  String button = "Chiudi";
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -40,21 +24,23 @@ class _DestinationScreenState extends State<DestinationScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/images/photo1.jpg',
-                width: MediaQuery.of(context).size.width * 0.9,
+                widget.photoPath,
+                width: MediaQuery.of(context).size.width * 0.7,
               ),
               const SizedBox(height: 30),
-              const Text("Hey",
-                  style: TextStyle(color: Colors.white, fontSize: 32)),
+              Text(widget.text,
+                  style: const TextStyle(color: Colors.white, fontSize: 32)),
               const SizedBox(height: 70),
               TextButton(
-                child: const Text(
-                  'Chiudi',
-                  style: TextStyle(
+                child: Text(
+                  button,
+                  style: const TextStyle(
                       color: Color.fromARGB(255, 233, 148, 105), fontSize: 34),
                 ),
                 onPressed: () {
-                  widget.backToCompass();
+                  button = "Solo un secondo...";
+
+                  widget.continuePlaylist();
                 },
               ),
             ],

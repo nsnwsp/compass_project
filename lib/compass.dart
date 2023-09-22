@@ -1,8 +1,10 @@
+import 'package:compass1/model/dest_place.dart';
 import 'package:flutter/material.dart';
-//import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'screens/compass_screen.dart';
 import 'screens/destination_screen.dart';
+import 'screens/navigation_over.dart';
+import 'data/place_playlist.dart';
 
 class Compass extends StatefulWidget {
   const Compass({super.key});
@@ -12,10 +14,20 @@ class Compass extends StatefulWidget {
 }
 
 class _CompassState extends State<Compass> {
+  DestPlace? currentPlace = playlist[0];
+  //DestCoord currentCoord = currentPlace.coord.latitude;//DestCoord(currentPlace.coord.latitude ?? 41.5852128 ?? 12.6558842);
+  List<DestPlace> currentPlaylist = List.from(playlist);
   bool _hasPermissions = false;
-  //late Geolocator userPosition;
+  //var currentCoord = (latitude: 41.5852128, longitude: 12.6558842);
 
-  var _activeScreen = 'destination-screen';
+  var _activeScreen = 'compass-screen';
+
+/* checks to have location permissions granted, during init*/
+  @override
+  void initState() {
+    super.initState();
+    //_fetchPermissionStatus();
+  }
 
   void _switchScreen() {
     _activeScreen == 'compass-screen'
@@ -27,11 +39,18 @@ class _CompassState extends State<Compass> {
           });
   }
 
-  /* checks to have location permissions granted, during init*/
-  @override
-  void initState() {
-    super.initState();
-    //_fetchPermissionStatus();
+  void _proceedInPlaylist() {
+    currentPlaylist.removeAt(0);
+    if (currentPlaylist.isEmpty) {
+      setState(() {
+        _activeScreen = 'navigation-over';
+      });
+    } else {
+      currentPlace = currentPlaylist[0];
+      setState(() {
+        _activeScreen = 'compass-screen';
+      });
+    }
   }
 
   // check and get the location service started///////////////////////////////////////////////////////////////////////////////
@@ -79,13 +98,17 @@ class _CompassState extends State<Compass> {
   // main app widget
   @override
   Widget build(BuildContext context) {
-    Widget screenWidget = CompassScreen(_switchScreen);
+    Widget screenWidget = CompassScreen(_switchScreen, currentPlace!.coord);
 
     if (_activeScreen == "compass-screen") {
-      screenWidget = CompassScreen(_switchScreen);
+      screenWidget = CompassScreen(_switchScreen, currentPlace!.coord);
     }
     if (_activeScreen == "destination-screen") {
-      screenWidget = DestinationScreen(_switchScreen);
+      screenWidget = DestinationScreen(
+          _proceedInPlaylist, currentPlace!.text, currentPlace!.photo);
+    }
+    if (_activeScreen == "navigation-over") {
+      screenWidget = const NavigatioOver();
     }
 
     return MaterialApp(

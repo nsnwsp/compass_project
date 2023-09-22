@@ -1,25 +1,18 @@
 import 'dart:math';
-import 'dart:async';
-//import 'dart:isolate';
-//import 'package:compass1/goal_location.dart';
-
-//<uses-permission android:name="android.permission.VIBRATE"/>    <--- questo da aggiungere al manifest
-
+//import 'dart:async';
+import 'package:compass1/model/dest_place.dart';
 import 'package:compass1/screens/nice_compass.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-//import 'package:flutter/services.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
+import 'package:compass1/goal_location.dart';
+//import 'package:vibration/vibration.dart';
 //import 'package:location/location.dart';
-//import 'package:flutter_qiblah/flutter_qiblah.dart';
-
-class destCoord {
-  //panchina parco musica
-  static double latitude = 41.5852128;
-  static double longitude = 12.6558842;
-}
+/*
+late Timer
+    backgroundVibration; // the Timer which will keep running until some cond is meet.
+bool shouldStop = false; // Add some variable to know , when to stop
+*/
 
 final _coordController = TextEditingController();
 
@@ -28,13 +21,12 @@ AnimationController? _animationController;
 double begin = 0.0;
 double? direction;
 double compassAccuracy = -1;
-double?
-    accuracy; // RICORDA CHE HAI DIMEZZATO IL TEMPO DI RICALCOLO DELLA POSIZIONE(?) NELLA CLASSE LOCATION
+double? accuracy;
 double? latitude;
 double? longitude;
 double locationHeading = 361;
 double distance = -1;
-double fakeDistance = 33;
+double fakeDistance = 4;
 var locationSettings = AndroidSettings(
   accuracy: LocationAccuracy.best,
   //distanceFilter: 1,
@@ -44,29 +36,21 @@ var locationSettings = AndroidSettings(
   //when going to the background
 );
 double bearing = 0;
-String messageDisplayed = "Welcome";
+String messageDisplayed = "Cammina verso la meta";
 
-final Iterable<Duration> longPauses = [
-  const Duration(milliseconds: 900),
-];
-final Iterable<Duration> mediumPauses = [
-  const Duration(milliseconds: 600),
-];
-final Iterable<Duration> shortPauses = [
-  const Duration(milliseconds: 200),
-];
-
-//double northOffset = 0;
+double northOffset = 0;
 //final Location userLocation = Location();
 //final Geolocator location1 = Geolocator();
 
-//final goal = GoalLocation(41.5852758, 12.6563285, 'Parco Lirica');
+final goal = GoalLocation(41.5852758, 12.6563285, 'Parco Lirica');
 //final goal1 = GoalLocation(43.6765487, 6.8218989, 'Francia da qualche parte');
 
 class CompassScreen extends StatefulWidget {
-  const CompassScreen(this.destinantionReached, {super.key});
+  const CompassScreen(this.destinantionReached, this.destCoord, {super.key});
 
   final void Function() destinantionReached;
+
+  final DestCoord destCoord;
 
   @override
   State<CompassScreen> createState() => _CompassScreenState();
@@ -80,37 +64,59 @@ class _CompassScreenState extends State<CompassScreen>
   @override
   void initState() {
     _animationController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 150));
+        vsync: this, duration: const Duration(milliseconds: 250));
     animation = Tween(begin: 0.0, end: 0.0).animate(
         _animationController!); // initialize the animation on dumb values...why??
-    _vibrate();
+/*
+    backgroundVibration =
+        Timer.periodic(const Duration(milliseconds: 1500), (timer) {
+      shouldVibrate(); // This will check whether to stop or go on. Every 1 sec
+});
+*/
+
     super.initState();
   }
 
-  static void vibrateDevice(double distance) {
-    while (distance < 35 && distance > 0) {
-      Vibrate.vibrateWithPauses(longPauses);
-    }
-    while (distance < 20 && distance > 8) {
-      Vibrate.vibrateWithPauses(mediumPauses);
-    }
-    while (distance < 8 && distance > 0) {
-      Vibrate.vibrateWithPauses(shortPauses);
-    }
+  @override
+  void dispose() {
+    //backgroundVibration.cancel();
+    _animationController?.dispose();
+    super.dispose();
   }
 
-  void _vibrate() async {
-    await compute(vibrateDevice, fakeDistance);
+  void closeCompass() {
+    widget.destinantionReached();
   }
 
+/*
+  void shouldVibrate() {
+    Vibration.cancel();
+    if (distance < 35 && distance > 20) {
+      Vibration.vibrate(pattern: [0, 50, 1400]);
+    }
+    /*
+    if (distance < 20 && distance > 8) {
+      Vibration.vibrate(pattern: [0, 200, 750]);
+    }
+    */
+    if (distance < 8 && distance > 0) {
+      Vibration.vibrate(pattern: [0, 500, 200]);
+    }
+    if (shouldStop) {
+      backgroundVibration.cancel();
+    }
+  }
+*/
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color.fromARGB(255, 48, 48, 48),
         body: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 40),
+            //const SizedBox(height: 40),
             StreamBuilder(
               stream: FlutterCompass
                   .events, // here it needs a direction... not qiblah tho
@@ -153,45 +159,60 @@ class _CompassScreenState extends State<CompassScreen>
               stream: Geolocator.getPositionStream(
                   locationSettings: locationSettings),
               builder: (context, snapshot) {
+                //Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+
                 //user coordinates have an error
                 if (snapshot.hasError) {
                   return const Text('Error while getting your location');
                 }
+
                 //user coordinates are not ready yet
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Text('Finding you on planet Earth...',
+                  return const Text('Determino la tua posizione sul pianeta...',
                       style: TextStyle(color: Colors.white, fontSize: 24));
                 }
 
                 latitude = snapshot.data!.latitude;
                 longitude = snapshot.data!.longitude;
                 accuracy = snapshot.data!.accuracy;
-                locationHeading = snapshot.data!.heading;
 
                 if (latitude == null || longitude == null) {
                   return const Text('Your coordinates are null!');
                 }
 
-                bearing = Geolocator.bearingBetween(latitude!, longitude!,
-                    destCoord.latitude, destCoord.longitude);
-                distance = Geolocator.distanceBetween(latitude!, longitude!,
-                    destCoord.latitude, destCoord.longitude);
+                northOffset = goal.getOffsetFromNorth(latitude!, longitude!,
+                    widget.destCoord.latitude, widget.destCoord.longitude);
 
-                // Check if close to DESTINATION
-                if (distance < 3.1) {
-                  messageDisplayed = "Ci sei quasi...";
+                // stop updating bearing if user is close to destination
+                if (distance < 45) {
+                  bearing = Geolocator.bearingBetween(latitude!, longitude!,
+                      widget.destCoord.latitude, widget.destCoord.longitude);
                 }
+
+                distance = Geolocator.distanceBetween(latitude!, longitude!,
+                    widget.destCoord.latitude, widget.destCoord.longitude);
 
                 // Check if arrived at DESTINATION
-                if (distance < 3) {
-                  //messageDisplayed = "Keep steady";
+                if (distance < 6) {
+                  messageDisplayed = "Attendi un istante";
                   // keep steady for 1 second
-                  Future.delayed(const Duration(milliseconds: 1200), () {
+                  //Future.delayed(const Duration(milliseconds: 500), () {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
                     widget.destinantionReached();
                   });
+
+                  //});
                 }
 
-                messageDisplayed = "Cammina verso la meta";
+                // Check if close to DESTINATION
+                if (distance < 35 && distance > 20) {
+                  messageDisplayed = "Sei sulla giusta strada";
+                }
+
+                // Check if really close to DESTINATION
+                if (distance < 13) {
+                  messageDisplayed = "Ci sei quasi...";
+                }
 
                 return Column(
                   children: [
@@ -205,33 +226,39 @@ class _CompassScreenState extends State<CompassScreen>
                         fontSize: 28,
                       ),
                     ),
-                    Text('${distance.toInt()} m',
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 32)),
                     const SizedBox(
                       height: 30,
                     ),
-                    Text('gps acc: ${accuracy!.toInt()}m',
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 18)),
-                    const SizedBox(
-                      height: 20,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('gps acc: ${accuracy!.toInt()}m',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 18)),
+                        const SizedBox(
+                          width: 20,
+                        ),
+                        Text('compass acc: ${compassAccuracy.toInt()}',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 18)),
+                      ],
                     ),
-                    Text('compass acc: ${compassAccuracy.toInt()}',
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 18)),
                   ],
                 );
               },
             ),
-            const SizedBox(height: 30),
+            /*
+            const SizedBox(height: 10),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                widget.destinantionReached();
+              },
               child: const Text(
                 "Cambia destinazione",
                 style: TextStyle(color: Colors.white, fontSize: 22),
               ),
-            )
+            ),
+            */
           ],
         ),
       ),
@@ -264,68 +291,76 @@ void _submitExpenseData() {
     // get north direction and offset then calculate their sum
     double? direction360 = direction! < 0 ? (360 + direction!) : direction;
 
-    //double northOffset360 = northOffset < 0 ? (360 + northOffset) : northOffset;
+    double northOffset360 = northOffset < 0 ? (360 + northOffset) : northOffset;
     double bearing360 = (bearing) < 0 ? (360 + (bearing)) : (bearing);
     double goalDirection = direction360! - bearing360;
     if (goalDirection < 0) {
       goalDirection = goalDirection + 360;
     }
 
-    return Center(
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        /*
-        Text(
-          "north: ${direction360.toInt()}°",
-          style: const TextStyle(color: Colors.white, fontSize: 24),
-        ),
-        */
-        Text(
-          "${goalDirection.toInt()}°",
-          style: const TextStyle(color: Colors.brown, fontSize: 40),
-        ),
-        const SizedBox(
-          height: 30,
-        ),
-        SizedBox(
-          child: Stack(alignment: Alignment.center, children: [
-            AnimatedBuilder(
-              animation: animation!,
-              builder: (context, child) {
-                return Transform.rotate(
-                  angle: animation!.value,
-                  child: NiceCompass(
-                    stack: Stack(
-                      children: [
-                        const CardinalDirections(),
-                        RotatingDirectionMarker(angle: bearing),
-                        //RotatingDirectionMarker(angle: northOffset)
-                      ],
-                    ),
+    return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      /*
+      Text(
+        "north: ${direction360.toInt()}°",
+        style: const TextStyle(color: Colors.white, fontSize: 24),
+      ),
+      */
+      Text(
+        "${goalDirection.toInt()}°",
+        style: const TextStyle(color: Colors.brown, fontSize: 40),
+      ),
+      const SizedBox(
+        height: 30,
+      ),
+      SizedBox(
+        child: Stack(alignment: Alignment.center, children: [
+          AnimatedBuilder(
+            animation: animation!,
+            builder: (context, child) {
+              return Transform.rotate(
+                angle: animation!.value,
+                child: NiceCompass(
+                  stack: Stack(
+                    children: [
+                      const CardinalDirections(),
+                      RotatingDirectionMarker(angle: bearing360),
+                      //RotatingDirectionMarker(angle: northOffset)
+                    ],
                   ),
-                );
-              },
+                ),
+              );
+            },
+          ),
+          Transform.translate(
+            offset: const Offset(0, -8),
+            child: Image.asset(
+              'assets/images/round_arrow.png',
+              height: 140,
+              width: 140,
             ),
-            Transform.translate(
-              offset: const Offset(0, -8),
-              child: Image.asset(
-                'assets/images/round_arrow.png',
-                height: 140,
-                width: 140,
-              ),
-            ),
-            Column(
-              children: [
-                Text('${(distance).toInt()}',
-                    //textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white, fontSize: 36)),
-                const Text('metri',
-                    //textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white, fontSize: 20)),
-              ],
-            ),
-          ]),
-        ),
-      ]),
-    );
+          ),
+          Column(
+            children: [
+              Text('${(distance).toInt()}',
+                  //textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white, fontSize: 36)),
+              const Text('metri',
+                  //textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white, fontSize: 20)),
+            ],
+          ),
+        ]),
+      ),
+      const SizedBox(
+        height: 15,
+      ),
+      Text('bearing: ${(bearing).toInt()} / ${bearing360.toInt()}',
+          //textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white, fontSize: 22)),
+      ////
+      Text('northoffset: ${(northOffset).toInt()} / ${northOffset360.toInt()}',
+          //textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white, fontSize: 22)),
+    ]);
   }
 }
