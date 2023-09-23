@@ -12,11 +12,13 @@ class NiceCompass extends StatelessWidget {
     double screenWidth = MediaQuery.of(context).size.width;
 
     return Container(
-      height: screenWidth * 0.92,
-      width: screenWidth * 0.92,
+      height: screenWidth * 0.94,
+      width: screenWidth * 0.94,
       alignment: Alignment.center, // inner container
-      decoration: const BoxDecoration(
-          color: Color.fromARGB(255, 233, 148, 105), shape: BoxShape.circle),
+      decoration: BoxDecoration(
+          border: Border.all(color: Colors.black, width: 3),
+          color: Color.fromARGB(255, 233, 148, 105),
+          shape: BoxShape.circle),
       child: Container(
         height: screenWidth * 0.85,
         width: screenWidth * 0.85,

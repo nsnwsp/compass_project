@@ -14,6 +14,7 @@ class Compass extends StatefulWidget {
 }
 
 class _CompassState extends State<Compass> {
+  bool userReady = false;
   DestPlace? currentPlace = playlist[0];
   //DestCoord currentCoord = currentPlace.coord.latitude;//DestCoord(currentPlace.coord.latitude ?? 41.5852128 ?? 12.6558842);
   List<DestPlace> currentPlaylist = List.from(playlist);
@@ -76,8 +77,10 @@ class _CompassState extends State<Compass> {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text("I need to know where you are to tell where to go next.",
+              textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white, fontSize: 18)),
           const SizedBox(height: 30),
           ElevatedButton(
@@ -112,19 +115,68 @@ class _CompassState extends State<Compass> {
     }
 
     return MaterialApp(
-      title: 'CompassAmor',
+      title: 'Compass Project',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
       home: FutureBuilder(
         builder: (context, snapshot) {
-          if (_hasPermissions) {
+          if (_hasPermissions && userReady) {
             return screenWidget;
           } else {
-            return Scaffold(
-              backgroundColor: const Color.fromARGB(255, 48, 48, 48),
-              body: _buildPermissionSheet(),
+            return SafeArea(
+              child: Scaffold(
+                backgroundColor: const Color.fromARGB(255, 48, 48, 48),
+                body: Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage("assets/images/start_back.jpg"),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        "assets/images/start_logo.png",
+                        height: 300,
+                      ),
+                      const SizedBox(height: 30),
+                      const Text(
+                          "Benvenuto, quando sei pronto possiamo iniziare.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white, fontSize: 24)),
+                      const SizedBox(height: 60),
+                      OutlinedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 40,
+                          ),
+                          backgroundColor: Color.fromARGB(132, 0, 0, 0),
+                          //foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                        ),
+                        child: const Text(
+                          "Sono pronto",
+                          style: TextStyle(
+                              color: Color.fromARGB(255, 255, 255, 255),
+                              fontSize: 30),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            userReady = true;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             );
           }
         },

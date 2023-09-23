@@ -111,155 +111,172 @@ class _CompassScreenState extends State<CompassScreen>
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 48, 48, 48),
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            //const SizedBox(height: 40),
-            StreamBuilder(
-              stream: FlutterCompass
-                  .events, // here it needs a direction... not qiblah tho
-              builder: (context, snapshot) {
-                // heading has error
-                if (snapshot.hasError) {
-                  return const Text('Error while getting north direction');
-                }
-                //snapshot not ready yet
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Text('Loading north direction...');
-                }
-
-                direction = snapshot.data!.heading;
-                compassAccuracy = snapshot.data!.accuracy ?? -1;
-
-                // if direction is null, propably no sensors
-                if (direction == null) {
-                  return const Text('Device might not have sensors!');
-                }
-
-                // animation settings
-                animation = Tween(
-                        begin:
-                            begin, // fist begin position would be 0.0, so it begins at the start position of the animation just initialized??...when app is executed
-                        end: (direction! * (pi / 180) * -1))
-                    .animate(_animationController!);
-                begin = (direction! *
-                    (pi / 180) *
-                    -1); // the following begin positions of each animation would be the end position of the one who came before
-
-                _animationController!
-                    .forward(from: 0); // implicitly starts the animation??
-
-                return _buildNiceCompass();
-              },
+        //backgroundColor: const Color.fromARGB(255, 48, 48, 48),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: RadialGradient(
+              radius: 1,
+              colors: [
+                Color.fromARGB(255, 107, 107, 107),
+                Color.fromARGB(255, 38, 38, 38)
+              ],
             ),
-            const SizedBox(height: 30),
-            StreamBuilder(
-              stream: Geolocator.getPositionStream(
-                  locationSettings: locationSettings),
-              builder: (context, snapshot) {
-                //Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            //crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              //const SizedBox(height: 40),
+              StreamBuilder(
+                stream: FlutterCompass
+                    .events, // here it needs a direction... not qiblah tho
+                builder: (context, snapshot) {
+                  // heading has error
+                  if (snapshot.hasError) {
+                    return const Text('Error while getting north direction');
+                  }
+                  //snapshot not ready yet
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Text('Loading north direction...');
+                  }
 
-                //user coordinates have an error
-                if (snapshot.hasError) {
-                  return const Text('Error while getting your location');
-                }
+                  direction = snapshot.data!.heading;
+                  compassAccuracy = snapshot.data!.accuracy ?? -1;
 
-                //user coordinates are not ready yet
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Text('Determino la tua posizione sul pianeta...',
-                      style: TextStyle(color: Colors.white, fontSize: 24));
-                }
+                  // if direction is null, propably no sensors
+                  if (direction == null) {
+                    return const Text('Device might not have sensors!');
+                  }
 
-                latitude = snapshot.data!.latitude;
-                longitude = snapshot.data!.longitude;
-                accuracy = snapshot.data!.accuracy;
+                  // animation settings
+                  animation = Tween(
+                          begin:
+                              begin, // fist begin position would be 0.0, so it begins at the start position of the animation just initialized??...when app is executed
+                          end: (direction! * (pi / 180) * -1))
+                      .animate(_animationController!);
+                  begin = (direction! *
+                      (pi / 180) *
+                      -1); // the following begin positions of each animation would be the end position of the one who came before
 
-                if (latitude == null || longitude == null) {
-                  return const Text('Your coordinates are null!');
-                }
+                  _animationController!
+                      .forward(from: 0); // implicitly starts the animation??
 
-                northOffset = goal.getOffsetFromNorth(latitude!, longitude!,
-                    widget.destCoord.latitude, widget.destCoord.longitude);
+                  return _buildNiceCompass();
+                },
+              ),
+              const SizedBox(height: 30),
+              StreamBuilder(
+                stream: Geolocator.getPositionStream(
+                    locationSettings: locationSettings),
+                builder: (context, snapshot) {
+                  //Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
 
-                // stop updating bearing if user is close to destination
-                if (distance < 45) {
+                  //user coordinates have an error
+                  if (snapshot.hasError) {
+                    return const Text('Error while getting your location',
+                        textAlign: TextAlign.center);
+                  }
+
+                  //user coordinates are not ready yet
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Text(
+                        'Determino la tua posizione sul pianeta...',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white, fontSize: 24));
+                  }
+
+                  latitude = snapshot.data!.latitude;
+                  longitude = snapshot.data!.longitude;
+                  accuracy = snapshot.data!.accuracy;
+
+                  if (latitude == null || longitude == null) {
+                    return const Text('Your coordinates are null!');
+                  }
+
+                  northOffset = goal.getOffsetFromNorth(latitude!, longitude!,
+                      widget.destCoord.latitude, widget.destCoord.longitude);
+
+                  // stop updating bearing if user is close to destination
+
                   bearing = Geolocator.bearingBetween(latitude!, longitude!,
                       widget.destCoord.latitude, widget.destCoord.longitude);
-                }
 
-                distance = Geolocator.distanceBetween(latitude!, longitude!,
-                    widget.destCoord.latitude, widget.destCoord.longitude);
+                  distance = Geolocator.distanceBetween(latitude!, longitude!,
+                      widget.destCoord.latitude, widget.destCoord.longitude);
 
-                // Check if arrived at DESTINATION
-                if (distance < 6) {
-                  messageDisplayed = "Attendi un istante";
-                  // keep steady for 1 second
-                  //Future.delayed(const Duration(milliseconds: 500), () {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    widget.destinantionReached();
-                  });
+                  // Check if arrived at DESTINATION
+                  if (distance < 7) {
+                    messageDisplayed = "Attendi un istante";
+                    // keep steady for 1 second
+                    //Future.delayed(const Duration(milliseconds: 500), () {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      widget.destinantionReached();
+                    });
 
-                  //});
-                }
+                    //});
+                  }
 
-                // Check if close to DESTINATION
-                if (distance < 35 && distance > 20) {
-                  messageDisplayed = "Sei sulla giusta strada";
-                }
+                  // Check if close to DESTINATION
+                  if (distance < 35 && distance > 20) {
+                    messageDisplayed = "Sei sulla giusta strada";
+                  }
 
-                // Check if really close to DESTINATION
-                if (distance < 13) {
-                  messageDisplayed = "Ci sei quasi...";
-                }
+                  // Check if really close to DESTINATION
+                  if (distance < 16) {
+                    messageDisplayed = "Ci sei quasi...";
+                  }
 
-                return Column(
-                  children: [
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    Text(
-                      messageDisplayed,
-                      style: const TextStyle(
-                        color: Color.fromARGB(255, 233, 148, 105),
-                        fontSize: 28,
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 30,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text('gps acc: ${accuracy!.toInt()}m',
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 18)),
-                        const SizedBox(
-                          width: 20,
+                  return Column(
+                    children: [
+                      Text(
+                        bearing == 0
+                            ? "Cerco la destinazione..."
+                            : messageDisplayed,
+                        style: TextStyle(
+                          background: Paint()
+                            ..color = Color.fromARGB(255, 0, 0, 0)
+                            ..strokeJoin = StrokeJoin.round
+                            ..strokeCap = StrokeCap.round
+                            ..style = PaintingStyle.stroke
+                            ..strokeWidth = 34.0,
+                          color: Colors.white,
+                          fontSize: 22,
                         ),
-                        Text('compass acc: ${compassAccuracy.toInt()}',
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 18)),
-                      ],
-                    ),
-                  ],
-                );
-              },
-            ),
-            /*
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: () {
-                widget.destinantionReached();
-              },
-              child: const Text(
-                "Cambia destinazione",
-                style: TextStyle(color: Colors.white, fontSize: 22),
+                      ),
+                      const SizedBox(
+                        height: 40,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('gps acc: ${accuracy!.toInt()}m',
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 18)),
+                          const SizedBox(
+                            width: 20,
+                          ),
+                          Text('compass acc: ${compassAccuracy.toInt()}',
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 18)),
+                        ],
+                      ),
+                    ],
+                  );
+                },
               ),
-            ),
-            */
-          ],
+
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: () {
+                  widget.destinantionReached();
+                },
+                child: const Text(
+                  "Salta destinazione",
+                  style: TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -291,7 +308,7 @@ void _submitExpenseData() {
     // get north direction and offset then calculate their sum
     double? direction360 = direction! < 0 ? (360 + direction!) : direction;
 
-    double northOffset360 = northOffset < 0 ? (360 + northOffset) : northOffset;
+    //double northOffset360 = northOffset < 0 ? (360 + northOffset) : northOffset;
     double bearing360 = (bearing) < 0 ? (360 + (bearing)) : (bearing);
     double goalDirection = direction360! - bearing360;
     if (goalDirection < 0) {
@@ -354,6 +371,7 @@ void _submitExpenseData() {
       const SizedBox(
         height: 15,
       ),
+      /*
       Text('bearing: ${(bearing).toInt()} / ${bearing360.toInt()}',
           //textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white, fontSize: 22)),
@@ -361,6 +379,7 @@ void _submitExpenseData() {
       Text('northoffset: ${(northOffset).toInt()} / ${northOffset360.toInt()}',
           //textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white, fontSize: 22)),
+          */
     ]);
   }
 }

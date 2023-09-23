@@ -22,24 +22,55 @@ class _DestinationScreenState extends State<DestinationScreen> {
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
             children: [
-              Image.asset(
-                widget.photoPath,
-                width: MediaQuery.of(context).size.width * 0.7,
+              Center(
+                child: Text(
+                  widget.text,
+                  style: TextStyle(
+                    background: Paint()
+                      ..color = Color.fromARGB(255, 0, 0, 0)
+                      ..strokeJoin = StrokeJoin.round
+                      ..strokeCap = StrokeCap.round
+                      ..style = PaintingStyle.stroke
+                      ..strokeWidth = 34.0,
+                    color: Colors.white,
+                    fontSize: 22,
+                  ),
+                ),
               ),
-              const SizedBox(height: 30),
-              Text(widget.text,
-                  style: const TextStyle(color: Colors.white, fontSize: 32)),
-              const SizedBox(height: 70),
-              TextButton(
+              const SizedBox(height: 20),
+              Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black, width: 3),
+                  ),
+                  child: Image.asset(
+                    widget.photoPath,
+                    width: MediaQuery.of(context).size.width * 0.85,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              OutlinedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 40,
+                  ),
+                  backgroundColor: Color.fromARGB(132, 0, 0, 0),
+                  //foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(40),
+                  ),
+                ),
                 child: Text(
                   button,
                   style: const TextStyle(
-                      color: Color.fromARGB(255, 233, 148, 105), fontSize: 34),
+                      color: Color.fromARGB(255, 255, 255, 255), fontSize: 30),
                 ),
                 onPressed: () {
                   button = "Solo un secondo...";
-
                   widget.continuePlaylist();
                 },
               ),
