@@ -5,7 +5,7 @@ import 'package:compass1/screens/nice_compass.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:compass1/goal_location.dart';
+//import 'package:compass1/goal_location.dart';
 //import 'package:vibration/vibration.dart';
 //import 'package:location/location.dart';
 /*
@@ -28,6 +28,7 @@ double locationHeading = 361;
 double distance = -1;
 double fakeDistance = 4;
 var locationSettings = AndroidSettings(
+  intervalDuration: const Duration(milliseconds: 1000),
   accuracy: LocationAccuracy.best,
   //distanceFilter: 1,
   forceLocationManager: false,
@@ -42,7 +43,7 @@ double northOffset = 0;
 //final Location userLocation = Location();
 //final Geolocator location1 = Geolocator();
 
-final goal = GoalLocation(41.5852758, 12.6563285, 'Parco Lirica');
+//final goal = GoalLocation(41.5852758, 12.6563285, 'Parco Lirica');
 //final goal1 = GoalLocation(43.6765487, 6.8218989, 'Francia da qualche parte');
 
 class CompassScreen extends StatefulWidget {
@@ -192,9 +193,6 @@ class _CompassScreenState extends State<CompassScreen>
                   if (latitude == null || longitude == null) {
                     return const Text('Your coordinates are null!');
                   }
-
-                  northOffset = goal.getOffsetFromNorth(latitude!, longitude!,
-                      widget.destCoord.latitude, widget.destCoord.longitude);
 
                   // stop updating bearing if user is close to destination
 
